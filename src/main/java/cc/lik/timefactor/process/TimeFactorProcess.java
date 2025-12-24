@@ -14,7 +14,7 @@ import run.halo.app.core.extension.User;
 import run.halo.app.core.extension.content.Tag;
 import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ReactiveExtensionClient;
-import run.halo.app.extension.index.query.QueryFactory;
+import run.halo.app.extension.index.query.Queries;
 import run.halo.app.extension.router.selector.FieldSelector;
 import run.halo.app.infra.ExternalLinkProcessor;
 import run.halo.app.infra.SystemInfo;
@@ -152,7 +152,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
 
         var listOptions = new ListOptions();
         listOptions.setFieldSelector(FieldSelector.of(
-            QueryFactory.in("metadata.name", tagNames.toArray(new String[0]))
+            Queries.in("metadata.name", tagNames.toArray(new String[0]))
         ));
 
         return client.listAll(Tag.class, listOptions, Sort.by(Sort.Order.asc("metadata.name")))
@@ -168,6 +168,13 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
         return Optional.ofNullable(instant)
             .map(inst -> inst.atZone(zoneId).format(formatter))
             .orElse("");
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private String genOGMeta(SeoData seoData) {
@@ -204,7 +211,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
               "upDate": "%s"
             }
             </script>
-            """.formatted(url, title, publishDate, updateDate);
+            """.formatted(url, escapeJson(title), publishDate, updateDate);
     }
 
     private String genSchemaOrgScript(SeoData seoData) {
@@ -239,10 +246,10 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             }
             </script>
             """.formatted(
-                seoData.postUrl(), seoData.title(), seoData.description(),
-                seoData.googlePubDate(), seoData.googleUpdDate(), seoData.author(),
-                seoData.siteName(), seoData.siteLogo(), seoData.coverUrl(),
-                seoData.postUrl(), seoData.keywords()
+                seoData.postUrl(), escapeJson(seoData.title()), escapeJson(seoData.description()),
+                seoData.googlePubDate(), seoData.googleUpdDate(), escapeJson(seoData.author()),
+                escapeJson(seoData.siteName()), seoData.siteLogo(), seoData.coverUrl(),
+                seoData.postUrl(), escapeJson(seoData.keywords())
             );
     }
 }

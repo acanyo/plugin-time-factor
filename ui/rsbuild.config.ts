@@ -1,3 +1,4 @@
+import type { RsbuildConfig } from "@rsbuild/core";
 import { rsbuildConfig } from '@halo-dev/ui-plugin-bundler-kit';
 import Icons from "unplugin-icons/rspack";
 import { pluginSass } from "@rsbuild/plugin-sass";
@@ -16,4 +17,4 @@ export default rsbuildConfig({
       },
     },
   }
-})
+}) as RsbuildConfig
