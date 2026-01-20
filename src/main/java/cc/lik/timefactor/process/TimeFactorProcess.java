@@ -119,21 +119,27 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
         });
     }
 
+    private String escapeHtml(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("&", "&amp;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#x27;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;");
+    }
+
     private Mono<Void> generateSeoTags(SeoData seoData, IModel model, IModelFactory modelFactory) {
         return settingConfigGetter.getBasicConfig()
             .map(config -> {
                 var sb = new StringBuilder();
-                
+
                 // 使用if-else简化配置检查
                 if (config.isEnableCanonicalLink()) {
-                    String url = seoData.postUrl()
-                        .replace("&", "&amp;")
-                        .replace("\"", "&quot;")
-                        .replace("<", "&lt;")
-                        .replace(">", "&gt;");
                     sb.append("<link rel=\"canonical\" href=\"")
-                    .append(url)
-                    .append("\" />\n");
+                        .append(escapeHtml(seoData.postUrl()))
+                        .append("\" />\n");
                 }
 
                 if (config.isEnableOGTimeFactor()) {
