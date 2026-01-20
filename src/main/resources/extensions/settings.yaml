@@ -37,12 +37,41 @@ spec:
             style:
               margin-left: "80px"
         - $formkit: checkbox
-          label: 启用 Canonical 链接
+          label: 启用 canonical 链接
           name: enableCanonicalLink
           id: enableCanonicalLink
           key: enableCanonicalLink
           value: true
           help: "帮助搜索引擎识别内容的唯一地址，避免重复内容的 SEO 问题"
+        - $formkit: checkbox
+          if: "$enableCanonicalLink === true"
+          label: 启用 alternate 链接
+          name: enableAlternateLink
+          id: enableAlternateLink
+          key: enableAlternateLink
+          value: false
+          help: "为多语言网站提供内容的替代版本，提升国际化 SEO"
+        - $formkit: array
+          if: "$enableAlternateLink === true"
+          label: 语言版本设置
+          name: alternateLinks
+          id: alternateLinks
+          key: alternateLinks
+          help: "为不同语言版本的内容添加 alternate 链接"
+          children:
+            - $formkit: text
+              label: 语言代码
+              name: langCode
+              id: langCode
+              key: langCode
+              help: "例如：zh-cn、en、fr、de、x-default 等"
+            - $formkit: text
+              label: URL 地址模板
+              name: urlTemplate
+              id: urlTemplate
+              key: urlTemplate
+              value: "%URL%"
+              help: "对应语言版本的完整 URL 地址；支持 %URL% 变量，代表当前内容的 URL"
         - $formkit: checkbox
           label: 启用百度时间因子
           name: enableBaiduTimeFactor

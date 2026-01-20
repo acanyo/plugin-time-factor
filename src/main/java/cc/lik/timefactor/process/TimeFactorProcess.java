@@ -101,6 +101,16 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             if (config.isEnableCanonicalLink()) {
                 sb.append("<link rel=\"canonical\" href=\"")
                     .append(HtmlEscape.escapeHtml5(seoData.postUrl())).append("\" />\n");
+
+                if (config.isEnableAlternateLink()) {
+                    for (var altLang : config.getAlternateLanguages()) {
+                        sb.append("<link rel=\"alternate\" hreflang=\"")
+                            .append(HtmlEscape.escapeHtml5(altLang.getLangCode()))
+                            .append("\" href=\"").append(HtmlEscape.escapeHtml5(
+                                altLang.getUrlTemplate().replace("%URL%", seoData.postUrl())))
+                            .append("\" />\n");
+                    }
+                }
             }
 
             if (config.isEnableOGTimeFactor()) {
