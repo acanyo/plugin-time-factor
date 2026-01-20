@@ -37,6 +37,13 @@ spec:
             style:
               margin-left: "80px"
         - $formkit: checkbox
+          label: 启用 Canonical 链接
+          name: enableCanonicalLink
+          id: enableCanonicalLink
+          key: enableCanonicalLink
+          value: true
+          help: "帮助搜索引擎识别内容的唯一地址，避免重复内容的SEO问题"
+        - $formkit: checkbox
           label: 启用百度时间因子
           name: enableBaiduTimeFactor
           id: enableBaiduTimeFactor

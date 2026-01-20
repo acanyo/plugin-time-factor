@@ -125,6 +125,17 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                 var sb = new StringBuilder();
                 
                 // 使用if-else简化配置检查
+                if (config.isEnableCanonicalLink()) {
+                    String url = seoData.postUrl()
+                        .replace("&", "&amp;")
+                        .replace("\"", "&quot;")
+                        .replace("<", "&lt;")
+                        .replace(">", "&gt;");
+                    sb.append("<link rel=\"canonical\" href=\"")
+                    .append(url)
+                    .append("\" />\n");
+                }
+
                 if (config.isEnableOGTimeFactor()) {
                     sb.append(genOGMeta(seoData));
                 }
