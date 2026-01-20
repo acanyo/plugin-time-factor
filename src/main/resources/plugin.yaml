@@ -7,7 +7,7 @@ metadata:
   name: time-factor
 spec:
   enabled: true
-  requires: ">=2.22.0"
+  requires: ">=2.22.10"
   author:
     name: Handsome
     website: https://www.lik.cc
