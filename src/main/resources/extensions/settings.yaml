@@ -42,7 +42,7 @@ spec:
           id: enableCanonicalLink
           key: enableCanonicalLink
           value: true
-          help: "帮助搜索引擎识别内容的唯一地址，避免重复内容的SEO问题"
+          help: "帮助搜索引擎识别内容的唯一地址，避免重复内容的 SEO 问题"
         - $formkit: checkbox
           label: 启用百度时间因子
           name: enableBaiduTimeFactor
@@ -51,14 +51,14 @@ spec:
           value: true
           help: "百度搜索引擎系列时间因子"
         - $formkit: checkbox
-          label: 启用OG时间因子
+          label: 启用 OG 时间因子
           name: enableOGTimeFactor
           id: enableOGTimeFactor
           key: enableOGTimeFactor
           value: true
           help: "主流搜索引擎系列时间因子"
         - $formkit: checkbox
-          label: 启用Meta时间因子
+          label: 启用 Meta 时间因子
           name: enableMetaTimeFactor
           id: enableMetaTimeFactor
           key: enableMetaTimeFactor
@@ -70,7 +70,7 @@ spec:
           id: enableStructuredData
           key: enableStructuredData
           value: true
-          help: "谷歌、Bing等搜索引擎获取内容信息的方式"
+          help: "谷歌、Bing 等搜索引擎获取内容信息的方式"
         - $formkit: attachment
           label: 默认封面图
           name: defaultImage
