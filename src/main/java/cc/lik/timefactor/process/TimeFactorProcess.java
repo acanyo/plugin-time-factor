@@ -20,6 +20,7 @@ import run.halo.app.infra.ExternalLinkProcessor;
 import run.halo.app.infra.SystemInfo;
 import run.halo.app.infra.SystemInfoGetter;
 import run.halo.app.theme.dialect.TemplateHeadProcessor;
+import org.unbescape.html.HtmlEscape;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -58,7 +59,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             .map(Object::toString)
             .filter(name -> !name.isEmpty())
             .orElse(null);
-            
+
         if (postName == null) {
             return Mono.empty();
         }
@@ -79,12 +80,12 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             var keywords = tuple.getT2();
             var config = tuple.getT3();
             var systemInfo = tuple.getT4();
-            
+
             var author = Optional.of(user)
                 .map(User::getSpec)
                 .map(User.UserSpec::getDisplayName)
                 .orElse(post.getSpec().getOwner());
-                
+
             var postUrl = externalLinkProcessor.processLink(post.getStatus().getPermalink());
             var title = post.getSpec().getTitle();
             var description = post.getSpec().getExcerpt().getRaw();
@@ -93,24 +94,24 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                     .filter(cover -> !cover.isBlank())
                     .orElse(config.getDefaultImage())
             );
-            
+
             var publishInstant = post.getSpec().getPublishTime();
             var updateInstant = post.getStatus().getLastModifyTime();
             var zoneId = ZoneId.systemDefault();
-            
+
             var baiduPubDate = formatDateTime(publishInstant, BAIDU_FORMATTER, zoneId);
             var baiduUpdDate = formatDateTime(updateInstant, BAIDU_FORMATTER, zoneId);
             var googlePubDate = formatDateTime(publishInstant, GOOGLE_FORMATTER, zoneId);
             var googleUpdDate = formatDateTime(updateInstant, GOOGLE_FORMATTER, zoneId);
-            
+
             var siteName = systemInfo.getTitle();
             var siteLogo = externalLinkProcessor.processLink(systemInfo.getLogo());
             var siteKeywords = Optional.ofNullable(systemInfo.getSeo())
                 .map(SystemInfo.SeoProp::getKeywords)
                 .orElse("");
-            
+
             var finalKeywords = keywords.isBlank() ? siteKeywords : keywords;
-            
+
             return new SeoData(
                 title, description, coverUrl, postUrl, author,
                 baiduPubDate, baiduUpdDate, googlePubDate, googleUpdDate,
@@ -119,16 +120,6 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
         });
     }
 
-    private String escapeHtml(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("&", "&amp;")
-            .replace("\"", "&quot;")
-            .replace("'", "&#x27;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;");
-    }
 
     private Mono<Void> generateSeoTags(SeoData seoData, IModel model, IModelFactory modelFactory) {
         return settingConfigGetter.getBasicConfig()
@@ -138,7 +129,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                 // 使用if-else简化配置检查
                 if (config.isEnableCanonicalLink()) {
                     sb.append("<link rel=\"canonical\" href=\"")
-                        .append(escapeHtml(seoData.postUrl()))
+                        .append(HtmlEscape.escapeHtml5(seoData.postUrl()))
                         .append("\" />\n");
                 }
 
@@ -154,7 +145,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                 if (config.isEnableStructuredData()) {
                     sb.append(genSchemaOrgScript(seoData));
                 }
-                
+
                 model.add(modelFactory.createText(sb.toString()));
                 return Mono.<Void>empty();
             })
