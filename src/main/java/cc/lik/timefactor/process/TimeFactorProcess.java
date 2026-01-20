@@ -21,6 +21,7 @@ import run.halo.app.infra.SystemInfo;
 import run.halo.app.infra.SystemInfoGetter;
 import run.halo.app.theme.dialect.TemplateHeadProcessor;
 import org.unbescape.html.HtmlEscape;
+import org.unbescape.json.JsonEscape;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -29,8 +30,10 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class TimeFactorProcess implements TemplateHeadProcessor {
-    private static final DateTimeFormatter BAIDU_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-    private static final DateTimeFormatter GOOGLE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+    private static final DateTimeFormatter BAIDU_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final DateTimeFormatter GOOGLE_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     private record SeoData(
         String title,
@@ -45,7 +48,8 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
         String siteName,
         String siteLogo,
         String keywords
-    ) {}
+    ) {
+    }
 
     private final ReactiveExtensionClient client;
     private final SettingConfigGetter settingConfigGetter;
@@ -53,7 +57,8 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     private final SystemInfoGetter systemInfoGetter;
 
     @Override
-    public Mono<Void> process(ITemplateContext context, IModel model, IElementModelStructureHandler handler) {
+    public Mono<Void> process(ITemplateContext context, IModel model,
+        IElementModelStructureHandler handler) {
         var modelFactory = context.getModelFactory();
         var postName = Optional.ofNullable(context.getVariable("name"))
             .map(Object::toString)
@@ -140,7 +145,9 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                     sb.append(genBytedanceMeta(seoData.baiduPubDate(), seoData.baiduUpdDate()));
                 }
                 if (config.isEnableBaiduTimeFactor()) {
-                    sb.append(genBaiduScript(seoData.title(), seoData.postUrl(), seoData.baiduPubDate(), seoData.baiduUpdDate()));
+                    sb.append(
+                        genBaiduScript(seoData.title(), seoData.postUrl(), seoData.baiduPubDate(),
+                            seoData.baiduUpdDate()));
                 }
                 if (config.isEnableStructuredData()) {
                     sb.append(genSchemaOrgScript(seoData));
@@ -172,17 +179,11 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             .defaultIfEmpty("");
     }
 
-    private String formatDateTime(java.time.Instant instant, DateTimeFormatter formatter, ZoneId zoneId) {
+    private String formatDateTime(java.time.Instant instant, DateTimeFormatter formatter,
+        ZoneId zoneId) {
         return Optional.ofNullable(instant)
             .map(inst -> inst.atZone(zoneId).format(formatter))
             .orElse("");
-    }
-
-    private String escapeJson(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private String genOGMeta(SeoData seoData) {
@@ -196,9 +197,10 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             <meta property="og:modified_time" content="%s"/>
             <meta property="og:author" content="%s"/>
             """.formatted(
-                seoData.title(), seoData.description(), seoData.coverUrl(), seoData.postUrl(),
-                seoData.baiduPubDate(), seoData.baiduUpdDate(), seoData.author()
-            );
+            HtmlEscape.escapeHtml5(seoData.title()), HtmlEscape.escapeHtml5(seoData.description()),
+            seoData.coverUrl(), seoData.postUrl(),
+            seoData.baiduPubDate(), seoData.baiduUpdDate(), HtmlEscape.escapeHtml5(seoData.author())
+        );
     }
 
     private String genBytedanceMeta(String publishDate, String updateDate) {
@@ -219,7 +221,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
               "upDate": "%s"
             }
             </script>
-            """.formatted(url, escapeJson(title), publishDate, updateDate);
+            """.formatted(url, JsonEscape.escapeJson(title), publishDate, updateDate);
     }
 
     private String genSchemaOrgScript(SeoData seoData) {
@@ -254,10 +256,12 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             }
             </script>
             """.formatted(
-                seoData.postUrl(), escapeJson(seoData.title()), escapeJson(seoData.description()),
-                seoData.googlePubDate(), seoData.googleUpdDate(), escapeJson(seoData.author()),
-                escapeJson(seoData.siteName()), seoData.siteLogo(), seoData.coverUrl(),
-                seoData.postUrl(), escapeJson(seoData.keywords())
-            );
+            seoData.postUrl(), JsonEscape.escapeJson(seoData.title()),
+            JsonEscape.escapeJson(seoData.description()),
+            seoData.googlePubDate(), seoData.googleUpdDate(),
+            JsonEscape.escapeJson(seoData.author()),
+            JsonEscape.escapeJson(seoData.siteName()), seoData.siteLogo(), seoData.coverUrl(),
+            seoData.postUrl(), JsonEscape.escapeJson(seoData.keywords())
+        );
     }
 }
