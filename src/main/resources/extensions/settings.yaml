@@ -36,14 +36,14 @@ spec:
             height: "120px"
             style:
               margin-left: "80px"
-        - $formkit: checkbox
+        - $formkit: switch
           label: 启用 canonical 链接
           name: enableCanonicalLink
           id: enableCanonicalLink
           key: enableCanonicalLink
           value: true
           help: "帮助搜索引擎识别内容的唯一地址，避免重复内容的 SEO 问题"
-        - $formkit: checkbox
+        - $formkit: switch
           if: "$enableCanonicalLink === true"
           label: 启用 alternate 链接
           name: enableAlternateLink
@@ -72,28 +72,28 @@ spec:
               key: urlTemplate
               value: "%URL%"
               help: "对应语言版本的完整 URL 地址；支持 %URL% 变量，代表当前内容的 URL"
-        - $formkit: checkbox
+        - $formkit: switch
           label: 启用百度时间因子
           name: enableBaiduTimeFactor
           id: enableBaiduTimeFactor
           key: enableBaiduTimeFactor
           value: true
           help: "百度搜索引擎系列时间因子"
-        - $formkit: checkbox
+        - $formkit: switch
           label: 启用 OG 时间因子
           name: enableOGTimeFactor
           id: enableOGTimeFactor
           key: enableOGTimeFactor
           value: true
           help: "主流搜索引擎系列时间因子"
-        - $formkit: checkbox
+        - $formkit: switch
           label: 启用 Meta 时间因子
           name: enableMetaTimeFactor
           id: enableMetaTimeFactor
           key: enableMetaTimeFactor
           value: true
           help: "头条等搜索引擎系列时间因子"
-        - $formkit: checkbox
+        - $formkit: switch
           label: 启用结构化数据
           name: enableStructuredData
           id: enableStructuredData

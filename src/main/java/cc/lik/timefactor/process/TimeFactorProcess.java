@@ -103,11 +103,11 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                     .append(HtmlEscape.escapeHtml5(seoData.postUrl())).append("\" />\n");
 
                 if (config.isEnableAlternateLink()) {
-                    for (var altLang : config.getAlternateLanguages()) {
+                    for (var altLink : config.getAlternateLinks()) {
                         sb.append("<link rel=\"alternate\" hreflang=\"")
-                            .append(HtmlEscape.escapeHtml5(altLang.getLangCode()))
+                            .append(HtmlEscape.escapeHtml5(altLink.getLangCode()))
                             .append("\" href=\"").append(HtmlEscape.escapeHtml5(
-                                altLang.getUrlTemplate().replace("%URL%", seoData.postUrl())))
+                                altLink.getUrlTemplate().replace("%URL%", seoData.postUrl())))
                             .append("\" />\n");
                     }
                 }

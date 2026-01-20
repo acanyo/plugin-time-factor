@@ -9,7 +9,7 @@ public interface SettingConfigGetter {
     Mono<BasicConfig> getBasicConfig();
 
     @Data
-    class alternateLanguage {
+    class alternateLink {
         private String langCode;
         private String urlTemplate;
     }
@@ -19,7 +19,7 @@ public interface SettingConfigGetter {
         public static final String GROUP = "basic";
         private boolean enableCanonicalLink;
         private boolean enableAlternateLink;
-        private List<alternateLanguage> alternateLanguages;
+        private List<alternateLink> alternateLinks;
         private boolean enableBaiduTimeFactor;
         private boolean enableOGTimeFactor;
         private boolean enableMetaTimeFactor;
