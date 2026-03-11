@@ -68,7 +68,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
 
             var postUrl = externalLinkProcessor.processLink(post.getStatus().getPermalink());
             var title = post.getSpec().getTitle();
-            var description = post.getSpec().getExcerpt().getRaw();
+            var description = post.getStatus().getExcerpt();
             var coverUrl = externalLinkProcessor.processLink(
                 Optional.ofNullable(post.getSpec().getCover()).filter(cover -> !cover.isBlank())
                     .orElse(config.getDefaultImage()));
