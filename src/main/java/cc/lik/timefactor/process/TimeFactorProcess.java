@@ -119,16 +119,17 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
 
     private enum PathMatchRule {
         // TODO: 需修改，读取配置中的路由规则进行匹配 /console/settings?tab=routeRules
+        // TODO: 可能要调整匹配顺序，可以参照 Halo CMS 官方实现
         INDEX("index.html", List.of("/", "/page/{page}")), // 首页
         POST("post.html", List.of("/archives/{slug}")), // 文章详情页
-        PAGE("page.html", List.of("/{slug}")), // 单页
         ARCHIVES("archives.html",
             List.of("/archives", "/archives/{year}", "/archives/{year}/{month}")), // 归档页
         TAGS("tags.html", List.of("/tags")), // 标签页
         TAG("tag.html", List.of("/tags/{slug}")), // 标签详情页
         CATEGORIES("categories.html", List.of("/categories")), // 分类页
         CATEGORY("category.html", List.of("/categories/{slug}")), // 分类详情页
-        AUTHOR("author.html", List.of("/authors/{name}")); // 作者详情页
+        AUTHOR("author.html", List.of("/authors/{name}")), // 作者详情页
+        PAGE("page.html", List.of("/{slug}")); // 单页
 
         private final String template;
         private final List<String> pathPatterns;
