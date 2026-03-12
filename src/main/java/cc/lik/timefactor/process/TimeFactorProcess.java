@@ -3,23 +3,17 @@ package cc.lik.timefactor.process;
 import cc.lik.timefactor.service.SettingConfigGetter;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.server.PathContainer;
 import org.springframework.stereotype.Component;
-import org.springframework.util.RouteMatcher;
-import org.springframework.web.util.pattern.PathPatternParser;
-import org.springframework.web.util.pattern.PathPatternRouteMatcher;
-import org.springframework.web.util.pattern.PatternParseException;
-import org.thymeleaf.context.Contexts;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.model.IModel;
 import org.thymeleaf.model.IModelFactory;
 import org.thymeleaf.processor.element.IElementModelStructureHandler;
-import org.thymeleaf.web.IWebRequest;
 import org.unbescape.html.HtmlEscape;
 import org.unbescape.json.JsonEscape;
 import reactor.core.publisher.Mono;
@@ -34,6 +28,41 @@ import run.halo.app.infra.ExternalLinkProcessor;
 import run.halo.app.infra.SystemInfo;
 import run.halo.app.infra.SystemInfoGetter;
 import run.halo.app.theme.dialect.TemplateHeadProcessor;
+import run.halo.app.theme.router.ModelConst;
+
+@Getter
+enum TemplateEnum {
+    // 内置模板 ID 参考 https://github.com/halo-dev/halo/blob/main/application/src/main/java/run/halo/app/theme/DefaultTemplateEnum.java
+    INDEX("index"), CATEGORIES("categories"), CATEGORY("category"), ARCHIVES("archives"),
+    POST("post"), TAG("tag"), TAGS("tags"), SINGLE_PAGE("page"), AUTHOR("author"),
+    // 适配瞬间插件 https://github.com/halo-sigs/plugin-moments
+    MOMENTS("moments"),  // 瞬间列表，路径 /moments
+    MOMENT("moment"), // 瞬间详情页，路径 /moments/{slug}
+    // 适配图库管理插件 https://github.com/halo-sigs/plugin-photos
+    PHOTOS("photos"),  // 路径 /photos
+    // 适配朋友圈插件 https://github.com/chengzhongxue/plugin-friends-new
+    FRIENDS("friends"), // 路径 /friends
+    // 适配豆瓣插件 https://github.com/chengzhongxue/plugin-douban
+    DOUBAN("douban"), // 路径 /douban
+    // 适配 BangumiData 插件 https://github.com/ShiinaKin/halo-plugin-bangumi-data
+    BANGUMI("bangumi"), // 路径 /bangumi
+    // 无法适配足迹插件 https://github.com/acanyo/halo-plugin-footprint ，值为 null
+    // 无法适配链接管理插件 https://github.com/halo-sigs/plugin-links ，值为 null
+    // 无法适配追番插件 https://github.com/Roozenlz/plugin-bilibili-bangumi ，值为 null
+    // 未知模板
+    UNKNOWN("unknown");
+
+    private final String value;
+
+    TemplateEnum(String value) {
+        this.value = value;
+    }
+
+    static TemplateEnum fromTemplateId(String templateId) {
+        return Arrays.stream(values()).filter(item -> item.getValue().equals(templateId))
+            .findFirst().orElse(UNKNOWN);
+    }
+}
 
 @Component
 @RequiredArgsConstructor
@@ -47,42 +76,43 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     private final SettingConfigGetter settingConfigGetter;
     private final ExternalLinkProcessor externalLinkProcessor;
     private final SystemInfoGetter systemInfoGetter;
-    private final RouteMatcher routeMatcher = createRouteMatcher();
-
-    RouteMatcher createRouteMatcher() {
-        var parser = new PathPatternParser();
-        parser.setPathOptions(PathContainer.Options.HTTP_PATH);
-        return new PathPatternRouteMatcher(parser);
-    }
 
     @Override
     public Mono<Void> process(ITemplateContext context, IModel model,
         IElementModelStructureHandler handler) {
 
-        if (!Contexts.isWebContext(context)) {
-            return Mono.empty();
-        }
+        var templateId =
+            Optional.ofNullable(context.getVariable(ModelConst.TEMPLATE_ID)).map(Object::toString)
+                .orElse(null);
+        var template = TemplateEnum.fromTemplateId(templateId);
 
-        IWebRequest request = Contexts.asWebContext(context).getExchange().getRequest();
-        String requestPath = request.getRequestPath();
-        RouteMatcher.Route requestRoute = routeMatcher.parseRoute(requestPath);
-        var matchedRule = matchRoute(requestRoute);
+        log.debug("Processing SEO for templateId: {}", templateId);
 
-        log.debug("Request path: {}, matched route: {}", requestPath,
-            matchedRule.map(PathMatchRule::template).orElse("UNMATCHED"));
-
-        // 未匹配到任何路由规则则不生成 SEO
-        return matchedRule.<Mono<Void>>map(pathMatchRule -> switch (pathMatchRule) {
-            // 匹配到首页路由规则
-            case INDEX -> Mono.empty();
-            // 匹配到文章详情页路由规则
-            case POST -> processPostRoute(context, model);
-            // 其他路由规则暂不处理
-            default -> Mono.empty();
-        }).orElseGet(Mono::empty);
+        return switch (template) {
+            case INDEX -> processIndexSeoData();
+            case POST -> processPostSeoData(context, model);
+            case CATEGORIES -> processCategoriesSeoData();
+            case CATEGORY -> processCategorySeoData();
+            case ARCHIVES -> processArchivesSeoData();
+            case TAGS -> processTagsSeoData();
+            case TAG -> processTagSeoData();
+            case SINGLE_PAGE -> processSinglePageSeoData();
+            case AUTHOR -> processAuthorSeoData();
+            case MOMENTS -> processMomentsSeoData();
+            case MOMENT -> processMomentSeoData();
+            case PHOTOS -> processPhotosSeoData();
+            case FRIENDS -> processFriendsSeoData();
+            case DOUBAN -> processDoubanSeoData();
+            case BANGUMI -> processBangumiSeoData();
+            case UNKNOWN -> Mono.empty();
+        };
     }
 
-    private Mono<Void> processPostRoute(ITemplateContext context, IModel model) {
+    private Mono<Void> processIndexSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processPostSeoData(ITemplateContext context, IModel model) {
         var modelFactory = context.getModelFactory();
         var postName = Optional.ofNullable(context.getVariable("name")).map(Object::toString)
             .filter(name -> !name.isEmpty()).orElse(null);
@@ -91,65 +121,64 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             return Mono.empty();
         }
 
-        return client.fetch(Post.class, postName).flatMap(post -> buildSeoData(post).flatMap(
+        return client.fetch(Post.class, postName).flatMap(post -> buildSeoDataForPost(post).flatMap(
             seoData -> generateSeoTags(seoData, model, modelFactory)));
     }
 
-    private Optional<PathMatchRule> matchRoute(RouteMatcher.Route requestRoute) {
-        for (var rule : PathMatchRule.values()) {
-            if (isMatchedRoute(requestRoute, rule)) {
-                return Optional.of(rule);
-            }
-        }
-        return Optional.empty();
+    private Mono<Void> processCategoriesSeoData() {
+        return Mono.empty();
     }
 
-    private boolean isMatchedRoute(RouteMatcher.Route requestRoute, PathMatchRule rule) {
-        for (var pathPattern : rule.pathPatterns()) {
-            try {
-                if (routeMatcher.match(pathPattern, requestRoute)) {
-                    return true;
-                }
-            } catch (PatternParseException e) {
-                log.warn("Parse route pattern [{}] failed", pathPattern, e);
-            }
-        }
-        return false;
+    private Mono<Void> processCategorySeoData() {
+        return Mono.empty();
     }
 
-    private enum PathMatchRule {
-        // TODO: 需修改，读取配置中的路由规则进行匹配 /console/settings?tab=routeRules
-        // TODO: 可能要调整匹配顺序，可以参照 Halo CMS 官方实现
-        INDEX("index.html", List.of("/", "/page/{page}")), // 首页
-        POST("post.html", List.of("/archives/{slug}")), // 文章详情页
-        ARCHIVES("archives.html",
-            List.of("/archives", "/archives/{year}", "/archives/{year}/{month}")), // 归档页
-        TAGS("tags.html", List.of("/tags")), // 标签页
-        TAG("tag.html", List.of("/tags/{slug}")), // 标签详情页
-        CATEGORIES("categories.html", List.of("/categories")), // 分类页
-        CATEGORY("category.html", List.of("/categories/{slug}")), // 分类详情页
-        AUTHOR("author.html", List.of("/authors/{name}")), // 作者详情页
-        PAGE("page.html", List.of("/{slug}")); // 单页
-
-        private final String template;
-        private final List<String> pathPatterns;
-
-        PathMatchRule(String template, List<String> pathPatterns) {
-            this.template = template;
-            this.pathPatterns = pathPatterns;
-        }
-
-        String template() {
-            return template;
-        }
-
-        List<String> pathPatterns() {
-            return pathPatterns;
-        }
+    private Mono<Void> processArchivesSeoData() {
+        return Mono.empty();
     }
 
-    private Mono<SeoData> buildSeoData(Post post) {
-        return Mono.zip(client.fetch(User.class, post.getSpec().getOwner()), findTag(post),
+    private Mono<Void> processTagsSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processTagSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processSinglePageSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processAuthorSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processMomentsSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processMomentSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processPhotosSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processFriendsSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processDoubanSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<Void> processBangumiSeoData() {
+        return Mono.empty();
+    }
+
+    private Mono<SeoData> buildSeoDataForPost(Post post) {
+        return Mono.zip(client.fetch(User.class, post.getSpec().getOwner()), findTagForPost(post),
             settingConfigGetter.getBasicConfig(), systemInfoGetter.get()).map(tuple -> {
             var user = tuple.getT1();
             var keywords = tuple.getT2();
@@ -226,7 +255,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
         }).then();
     }
 
-    private Mono<String> findTag(Post post) {
+    private Mono<String> findTagForPost(Post post) {
         var tagNames = post.getSpec().getTags();
         if (tagNames == null || tagNames.isEmpty()) {
             return Mono.just("");
