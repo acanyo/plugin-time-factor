@@ -8,7 +8,6 @@
 - **文档**：[https://docs.lik.cc/](https://docs.lik.cc/)
 - **QQ 交流群**：[![QQ群](https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png)](https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png)
 
-
 ## 功能特性
 
 ### 结构化数据注入效果示例
@@ -44,7 +43,15 @@
 - **雅虎** (Slurp)
 - **Ask** (Teoma)
 
-## 结构化数据类型
+## 支持注入的页面类型
+
+- [文章详情页](https://docs.halo.run/developer-guide/theme/template-variables/post)
+
+## 支持注入的数据类型
+
+### Link 标签
+- canonical 链接
+- alternate 链接
 
 ### Open Graph (OG)
 - 标题、描述、封面图
