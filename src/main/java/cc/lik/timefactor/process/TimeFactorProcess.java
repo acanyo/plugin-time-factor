@@ -367,13 +367,13 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
 
         // 如果站点用户名非空，添加 site 标签
         if (twitterSiteUsername != null && !twitterSiteUsername.trim().isEmpty()) {
-            sb.append("<meta name=\"twitter:site\" content=\"@")
+            sb.append("<meta name=\"twitter:site\" content=\"")
                 .append(HtmlEscape.escapeHtml5(twitterSiteUsername)).append("\" />\n");
         }
 
         // 如果创作者用户名非空，添加 creator 标签
         if (twitterCreatorUsername != null && !twitterCreatorUsername.trim().isEmpty()) {
-            sb.append("<meta name=\"twitter:creator\" content=\"@")
+            sb.append("<meta name=\"twitter:creator\" content=\"")
                 .append(HtmlEscape.escapeHtml5(twitterCreatorUsername)).append("\" />\n");
         }
 
