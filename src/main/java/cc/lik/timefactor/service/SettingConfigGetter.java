@@ -27,7 +27,9 @@ public interface SettingConfigGetter {
         private boolean enableTwitterCards;
         private String twitterCardsType;
         private String twitterSiteUsername;
+        private String twitterSiteUserId;
         private String twitterCreatorUsername;
+        private String twitterCreatorUserId;
         private String defaultImage;
     }
 }

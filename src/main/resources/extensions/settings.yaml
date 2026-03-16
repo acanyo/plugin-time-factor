@@ -130,10 +130,24 @@ spec:
           value: ""
         - $formkit: text
           if: "$enableTwitterCards === true"
+          label: 网站/公司的 Twitter/X 用户 id
+          name: twitterSiteUserId
+          id: twitterSiteUserId
+          key: twitterSiteUserId
+          value: ""
+        - $formkit: text
+          if: "$enableTwitterCards === true"
           label: 内容作者的 Twitter/X 用户名
           name: twitterCreatorUsername
           id: twitterCreatorUsername
           key: twitterCreatorUsername
+          value: ""
+        - $formkit: text
+          if: "$enableTwitterCards === true"
+          label: 内容作者的 Twitter/X 用户 id
+          name: twitterCreatorUserId
+          id: twitterCreatorUserId
+          key: twitterCreatorUserId
           value: ""
         - $formkit: attachment
           label: 默认封面图

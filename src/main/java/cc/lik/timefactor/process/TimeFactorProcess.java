@@ -253,7 +253,8 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
 
             if (config.isEnableTwitterCards()) {
                 sb.append(genTwitterCards(seoData, config.getTwitterCardsType(),
-                    config.getTwitterSiteUsername(), config.getTwitterCreatorUsername()));
+                    config.getTwitterSiteUsername(), config.getTwitterSiteUserId(),
+                    config.getTwitterCreatorUsername(), config.getTwitterCreatorUserId()));
             }
 
             model.add(modelFactory.createText(sb.toString()));
@@ -358,7 +359,8 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     }
 
     private String genTwitterCards(SeoData seoData, String twitterCardsType,
-        String twitterSiteUsername, String twitterCreatorUsername) {
+        String twitterSiteUsername, String twitterSiteUserId, String twitterCreatorUsername,
+        String twitterCreatorUserId) {
         StringBuilder sb = new StringBuilder();
 
         // card 标签始终添加
@@ -371,11 +373,22 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                 .append(HtmlEscape.escapeHtml5(twitterSiteUsername)).append("\" />\n");
         }
 
+        if (twitterSiteUserId != null && !twitterSiteUserId.trim().isEmpty()) {
+            sb.append("<meta name=\"twitter:site:id\" content=\"")
+                .append(HtmlEscape.escapeHtml5(twitterSiteUserId)).append("\" />\n");
+        }
+
         // 如果创作者用户名非空，添加 creator 标签
         if (twitterCreatorUsername != null && !twitterCreatorUsername.trim().isEmpty()) {
             sb.append("<meta name=\"twitter:creator\" content=\"")
                 .append(HtmlEscape.escapeHtml5(twitterCreatorUsername)).append("\" />\n");
         }
+
+        if (twitterCreatorUserId != null && !twitterCreatorUserId.trim().isEmpty()) {
+            sb.append("<meta name=\"twitter:creator:id\" content=\"")
+                .append(HtmlEscape.escapeHtml5(twitterCreatorUserId)).append("\" />\n");
+        }
+
 
         // 标题、描述、图片标签始终添加
         sb.append("<meta name=\"twitter:title\" content=\"")
