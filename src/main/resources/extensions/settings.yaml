@@ -100,6 +100,55 @@ spec:
           key: enableStructuredData
           value: true
           help: "谷歌、Bing 等搜索引擎获取内容信息的方式"
+        - $formkit: switch
+          label: 启用 Twitter Cards
+          name: enableTwitterCards
+          id: enableTwitterCards
+          key: enableTwitterCards
+          value: true
+          help: "Twitter/X 平台的内容展示卡片，提升社交媒体分享效果"
+        - $formkit: select
+          if: "$enableTwitterCards === true"
+          label: Twitter Cards 类型
+          name: twitterCardsType
+          id: twitterCardsType
+          key: twitterCardsType
+          validation: "required"
+          value: summary_large_image
+          options:
+            - label: 带大图的摘要卡片
+              value: summary_large_image
+            - label: 摘要卡片
+              value: summary
+          help: "选择适合内容的 Twitter/X Card 类型，提升社交媒体分享效果"
+        - $formkit: text
+          if: "$enableTwitterCards === true"
+          label: 网站/公司的 Twitter/X 用户名
+          name: twitterSiteUsername
+          id: twitterSiteUsername
+          key: twitterSiteUsername
+          value: ""
+        - $formkit: text
+          if: "$enableTwitterCards === true"
+          label: 网站/公司的 Twitter/X 用户 id
+          name: twitterSiteUserId
+          id: twitterSiteUserId
+          key: twitterSiteUserId
+          value: ""
+        - $formkit: text
+          if: "$enableTwitterCards === true"
+          label: 内容作者的 Twitter/X 用户名
+          name: twitterCreatorUsername
+          id: twitterCreatorUsername
+          key: twitterCreatorUsername
+          value: ""
+        - $formkit: text
+          if: "$enableTwitterCards === true"
+          label: 内容作者的 Twitter/X 用户 id
+          name: twitterCreatorUserId
+          id: twitterCreatorUserId
+          key: twitterCreatorUserId
+          value: ""
         - $formkit: attachment
           label: 默认封面图
           name: defaultImage

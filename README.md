@@ -30,19 +30,6 @@
 - 结构化数据格式紧凑，无多余注释
 - 异常处理完善，保证系统稳定性
 
-## 支持的搜索引擎
-
-- **Google** (Googlebot)
-- **百度** (Baiduspider) 
-- **字节跳动** (Bytespider)
-- **必应** (Bingbot)
-- **360搜索** (360spider)
-- **搜狗** (Sogou)
-- **Yandex**
-- **DuckDuckGo** (DuckDuckBot)
-- **雅虎** (Slurp)
-- **Ask** (Teoma)
-
 ## 支持注入的页面类型
 
 - [文章详情页](https://docs.halo.run/developer-guide/theme/template-variables/post)
@@ -72,6 +59,25 @@
 - 文章结构化数据
 - 作者信息
 - 发布时间（带时区）
+
+### Twitter Cards
+
+- 标题、描述、图片
+- 站点 Twitter/X 账号信息
+- 作者 Twitter/X 账号信息
+
+## 支持的搜索引擎
+
+- **Google** (Googlebot)
+- **百度** (Baiduspider)
+- **字节跳动** (Bytespider)
+- **必应** (Bingbot)
+- **360搜索** (360spider)
+- **搜狗** (Sogou)
+- **Yandex**
+- **DuckDuckGo** (DuckDuckBot)
+- **雅虎** (Slurp)
+- **Ask** (Teoma)
 
 ## 开发环境
 
