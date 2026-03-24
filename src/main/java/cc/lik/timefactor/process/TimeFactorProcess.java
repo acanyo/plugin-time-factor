@@ -498,7 +498,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                     Optional.ofNullable(systemInfo.getSeo()).map(SystemInfo.SeoProp::getKeywords)
                         .orElse(null);
 
-                // 列表页没有具体的发布/更新时间和作者信息，相关字段留空；pageType 为 website
+                // 列表页没有具体的发布/更新时间，相关字段留空，作者使用站点名称；pageType 为 website
                 var seoData =
                     new SeoData(title, description, coverUrl, pageUrl, siteName, null, null, null,
                         null, siteName, siteLogo, keywords, "website");
