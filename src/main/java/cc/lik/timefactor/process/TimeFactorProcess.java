@@ -1,6 +1,11 @@
 package cc.lik.timefactor.process;
 
 import cc.lik.timefactor.service.SettingConfigGetter;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +32,6 @@ import run.halo.app.infra.SystemInfo;
 import run.halo.app.infra.SystemInfoGetter;
 import run.halo.app.theme.dialect.TemplateHeadProcessor;
 import run.halo.app.theme.router.ModelConst;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * 模板 ID 枚举，映射 Halo 路由系统中的 {@code _templateId} 到具体页面类型。
@@ -478,30 +478,30 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
                 var config = tuple.getT1();
                 var systemInfo = tuple.getT2();
 
-                var siteName = safeString(systemInfo.getTitle());
-                var siteLogo = externalLinkProcessor.processLink(safeString(systemInfo.getLogo()));
+                var siteName = systemInfo.getTitle();
+                var siteLogo = processPermalink(systemInfo.getLogo());
 
                 // 标题格式：pageTitle - siteName
-                var title = siteName.isBlank() ? pageTitle : pageTitle + " - " + siteName;
+                var title = hasValue(siteName) ? pageTitle + " - " + siteName : pageTitle;
 
                 // 描述优先级：传入描述 > 站点 SEO 描述 > 页面标题
                 var siteDesc =
                     Optional.ofNullable(systemInfo.getSeo()).map(SystemInfo.SeoProp::getDescription)
-                        .orElse("");
+                        .orElse(null);
                 var description = firstNonBlank(fallbackDesc, siteDesc, pageTitle);
 
                 // 通过 ExternalLinkProcessor 将相对路径转为完整的外部 URL
                 var pageUrl = externalLinkProcessor.processLink(pagePath);
-                var coverUrl = externalLinkProcessor.processLink(
-                    firstNonBlank(config.getDefaultImage(), systemInfo.getLogo()));
+                var coverUrl =
+                    processPermalink(firstNonBlank(config.getDefaultImage(), systemInfo.getLogo()));
                 var keywords =
                     Optional.ofNullable(systemInfo.getSeo()).map(SystemInfo.SeoProp::getKeywords)
-                        .orElse("");
+                        .orElse(null);
 
                 // 列表页没有具体的发布/更新时间和作者信息，相关字段留空；pageType 为 website
                 var seoData =
-                    new SeoData(title, description, coverUrl, pageUrl, siteName, "", "", "", "",
-                        siteName, siteLogo, keywords, "website");
+                    new SeoData(title, description, coverUrl, pageUrl, siteName, null, null, null,
+                        null, siteName, siteLogo, keywords, "website");
 
                 return generateSeoTags(seoData, model, modelFactory);
             }).onErrorResume(error -> {
@@ -545,25 +545,26 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             var author = Optional.of(user).map(User::getSpec).map(User.UserSpec::getDisplayName)
                 .orElse(post.getSpec().getOwner());
 
-            var postUrl = externalLinkProcessor.processLink(post.getStatus().getPermalink());
+            // status 字段在 Reconciler 首次处理前为 null，使用 getStatusOrDefault() 安全获取
+            var status = post.getStatusOrDefault();
+            var postUrl = processPermalink(status.getPermalink());
             var title = post.getSpec().getTitle();
-            var description = post.getStatus().getExcerpt();
+            var description = status.getExcerpt();
             // 封面：优先文章封面，回退到插件默认封面
-            var coverUrl = externalLinkProcessor.processLink(
-                Optional.ofNullable(post.getSpec().getCover()).filter(cover -> !cover.isBlank())
-                    .orElse(config.getDefaultImage()));
+            var coverUrl = processPermalink(
+                firstNonBlank(post.getSpec().getCover(), config.getDefaultImage()));
 
             var publishInstant = post.getSpec().getPublishTime();
-            var updateInstant = post.getStatus().getLastModifyTime();
+            var updateInstant = status.getLastModifyTime();
             var zoneId = ZoneId.systemDefault();
 
             var siteName = systemInfo.getTitle();
-            var siteLogo = externalLinkProcessor.processLink(systemInfo.getLogo());
+            var siteLogo = processPermalink(systemInfo.getLogo());
             var siteKeywords =
                 Optional.ofNullable(systemInfo.getSeo()).map(SystemInfo.SeoProp::getKeywords)
-                    .orElse("");
+                    .orElse(null);
             // 关键词：优先文章标签，回退到站点 SEO 关键词
-            var finalKeywords = keywords.isBlank() ? siteKeywords : keywords;
+            var finalKeywords = hasValue(keywords) ? keywords : siteKeywords;
 
             return new SeoData(title, description, coverUrl, postUrl, author,
                 formatDateTime(publishInstant, BAIDU_FORMATTER, zoneId),
@@ -607,22 +608,23 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             var author = Optional.of(user).map(User::getSpec).map(User.UserSpec::getDisplayName)
                 .orElse(page.getSpec().getOwner());
 
-            var pageUrl = externalLinkProcessor.processLink(page.getStatus().getPermalink());
+            // status 字段在 Reconciler 首次处理前为 null，使用 getStatusOrDefault() 安全获取
+            var status = page.getStatusOrDefault();
+            var pageUrl = processPermalink(status.getPermalink());
             var title = page.getSpec().getTitle();
-            var description = page.getStatus().getExcerpt();
-            var coverUrl = externalLinkProcessor.processLink(
-                Optional.ofNullable(page.getSpec().getCover()).filter(cover -> !cover.isBlank())
-                    .orElse(config.getDefaultImage()));
+            var description = status.getExcerpt();
+            var coverUrl = processPermalink(
+                firstNonBlank(page.getSpec().getCover(), config.getDefaultImage()));
 
             var publishInstant = page.getSpec().getPublishTime();
-            var updateInstant = page.getStatus().getLastModifyTime();
+            var updateInstant = status.getLastModifyTime();
             var zoneId = ZoneId.systemDefault();
 
             var siteName = systemInfo.getTitle();
-            var siteLogo = externalLinkProcessor.processLink(systemInfo.getLogo());
+            var siteLogo = processPermalink(systemInfo.getLogo());
             var keywords =
                 Optional.ofNullable(systemInfo.getSeo()).map(SystemInfo.SeoProp::getKeywords)
-                    .orElse("");
+                    .orElse(null);
 
             return new SeoData(title, description, coverUrl, pageUrl, author,
                 formatDateTime(publishInstant, BAIDU_FORMATTER, zoneId),
@@ -656,23 +658,24 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             var config = tuple.getT1();
             var systemInfo = tuple.getT2();
 
-            var displayName = safeString(category.getSpec().getDisplayName());
-            var siteName = safeString(systemInfo.getTitle());
-            var title = siteName.isBlank() ? displayName : displayName + " - " + siteName;
+            var displayName = category.getSpec().getDisplayName();
+            var siteName = systemInfo.getTitle();
+            var title = hasValue(siteName) ? displayName + " - " + siteName : displayName;
 
             // 分类有 description 字段，回退到 "分类: displayName"
             var description =
                 firstNonBlank(category.getSpec().getDescription(), "分类: " + displayName);
 
-            var pageUrl = externalLinkProcessor.processLink(category.getStatus().getPermalink());
-            var coverUrl = externalLinkProcessor.processLink(
+            // status 字段在 Reconciler 首次处理前为 null，使用 getStatusOrDefault() 安全获取
+            var pageUrl = processPermalink(category.getStatusOrDefault().getPermalink());
+            var coverUrl = processPermalink(
                 firstNonBlank(category.getSpec().getCover(), config.getDefaultImage(),
                     systemInfo.getLogo()));
-            var siteLogo = externalLinkProcessor.processLink(safeString(systemInfo.getLogo()));
+            var siteLogo = processPermalink(systemInfo.getLogo());
 
             // 分类没有独立的作者和发布时间，作者使用站点名称，日期留空；pageType 为 website
-            return new SeoData(title, description, coverUrl, pageUrl, siteName, "", "", "", "",
-                siteName, siteLogo, displayName, "website");
+            return new SeoData(title, description, coverUrl, pageUrl, siteName, null, null, null,
+                null, siteName, siteLogo, displayName, "website");
         });
     }
 
@@ -699,21 +702,22 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             var config = tuple.getT1();
             var systemInfo = tuple.getT2();
 
-            var displayName = safeString(tag.getSpec().getDisplayName());
-            var siteName = safeString(systemInfo.getTitle());
-            var title = siteName.isBlank() ? displayName : displayName + " - " + siteName;
+            var displayName = tag.getSpec().getDisplayName();
+            var siteName = systemInfo.getTitle();
+            var title = hasValue(siteName) ? displayName + " - " + siteName : displayName;
             // Tag 没有 description 字段，使用语义描述
             var description = "标签: " + displayName;
 
-            var pageUrl = externalLinkProcessor.processLink(tag.getStatus().getPermalink());
-            var coverUrl = externalLinkProcessor.processLink(
+            // status 字段在 Reconciler 首次处理前为 null，使用 getStatusOrDefault() 安全获取
+            var pageUrl = processPermalink(tag.getStatusOrDefault().getPermalink());
+            var coverUrl = processPermalink(
                 firstNonBlank(tag.getSpec().getCover(), config.getDefaultImage(),
                     systemInfo.getLogo()));
-            var siteLogo = externalLinkProcessor.processLink(safeString(systemInfo.getLogo()));
+            var siteLogo = processPermalink(systemInfo.getLogo());
 
             // 标签没有独立的作者和发布时间；pageType 为 website
-            return new SeoData(title, description, coverUrl, pageUrl, siteName, "", "", "", "",
-                siteName, siteLogo, displayName, "website");
+            return new SeoData(title, description, coverUrl, pageUrl, siteName, null, null, null,
+                null, siteName, siteLogo, displayName, "website");
         });
     }
 
@@ -741,22 +745,22 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             var config = tuple.getT1();
             var systemInfo = tuple.getT2();
 
-            var displayName = safeString(user.getSpec().getDisplayName());
-            var siteName = safeString(systemInfo.getTitle());
-            var title = siteName.isBlank() ? displayName : displayName + " - " + siteName;
+            var displayName = user.getSpec().getDisplayName();
+            var siteName = systemInfo.getTitle();
+            var title = hasValue(siteName) ? displayName + " - " + siteName : displayName;
             var description = firstNonBlank(user.getSpec().getBio(), "作者: " + displayName);
 
             // User 没有 status.permalink，手动构造作者归档页 URL
             var pageUrl =
                 externalLinkProcessor.processLink("/authors/" + user.getMetadata().getName());
-            var coverUrl = externalLinkProcessor.processLink(
+            var coverUrl = processPermalink(
                 firstNonBlank(user.getSpec().getAvatar(), config.getDefaultImage(),
                     systemInfo.getLogo()));
-            var siteLogo = externalLinkProcessor.processLink(safeString(systemInfo.getLogo()));
+            var siteLogo = processPermalink(systemInfo.getLogo());
 
             // 作者页的 author 字段即为用户自身；pageType 为 profile
-            return new SeoData(title, description, coverUrl, pageUrl, displayName, "", "", "", "",
-                siteName, siteLogo, displayName, "profile");
+            return new SeoData(title, description, coverUrl, pageUrl, displayName, null, null, null,
+                null, siteName, siteLogo, displayName, "profile");
         });
     }
 
@@ -784,18 +788,25 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
         return settingConfigGetter.getBasicConfig().doOnNext(config -> {
             var sb = new StringBuilder();
 
-            // canonical 和 alternate 链接
-            if (config.isEnableCanonicalLink()) {
+            // canonical 和 alternate 链接（pageUrl 为空时跳过，无有效 URL 的页面不输出 canonical）
+            if (config.isEnableCanonicalLink() && hasValue(seoData.pageUrl())) {
                 sb.append("<link rel=\"canonical\" href=\"")
-                    .append(HtmlEscape.escapeHtml5(seoData.postUrl())).append("\" />\n");
+                    .append(HtmlEscape.escapeHtml5(seoData.pageUrl())).append("\" />\n");
 
                 if (config.isEnableAlternateLink()) {
-                    for (var altLink : config.getAlternateLinks()) {
-                        sb.append("<link rel=\"alternate\" hreflang=\"")
-                            .append(HtmlEscape.escapeHtml5(altLink.getLangCode()))
-                            .append("\" href=\"").append(HtmlEscape.escapeHtml5(
-                                altLink.getUrlTemplate().replace("%URL%", seoData.postUrl())))
-                            .append("\" />\n");
+                    var alternateLinks = config.getAlternateLinks();
+                    if (alternateLinks == null) {
+                        log.warn(
+                            "Alternate link is enabled but alternateLinks list is null, skipping "
+                                + "alternate tags");
+                    } else {
+                        for (var altLink : alternateLinks) {
+                            sb.append("<link rel=\"alternate\" hreflang=\"")
+                                .append(HtmlEscape.escapeHtml5(altLink.getLangCode()))
+                                .append("\" href=\"").append(HtmlEscape.escapeHtml5(
+                                    altLink.getUrlTemplate().replace("%URL%", seoData.pageUrl())))
+                                .append("\" />\n");
+                        }
                     }
                 }
             }
@@ -810,7 +821,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             }
             // 百度时间因子
             if (config.isEnableBaiduTimeFactor()) {
-                sb.append(genBaiduScript(seoData.title(), seoData.postUrl(), seoData.baiduPubDate(),
+                sb.append(genBaiduScript(seoData.title(), seoData.pageUrl(), seoData.baiduPubDate(),
                     seoData.baiduUpdDate()));
             }
             // Schema.org JSON-LD
@@ -839,27 +850,35 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
      * @see <a href="https://ogp.me/">The Open Graph protocol</a>
      */
     private String genOGMeta(SeoData seoData) {
+        // 所有字段按需输出：null 或空白时跳过对应标签，避免生成无意义的空标签
         var sb = new StringBuilder();
         sb.append("<meta property=\"og:type\" content=\"")
             .append(HtmlEscape.escapeHtml5(seoData.pageType())).append("\" />\n");
-        sb.append("<meta property=\"og:title\" content=\"")
-            .append(HtmlEscape.escapeHtml5(seoData.title())).append("\" />\n");
-        sb.append("<meta property=\"og:description\" content=\"")
-            .append(HtmlEscape.escapeHtml5(seoData.description())).append("\" />\n");
-        sb.append("<meta property=\"og:image\" content=\"").append(seoData.coverUrl())
-            .append("\" />\n");
-        sb.append("<meta property=\"og:url\" content=\"").append(seoData.postUrl())
-            .append("\" />\n");
-        // 日期和作者字段仅在非空时输出，避免生成无意义的空标签
-        if (!seoData.baiduPubDate().isBlank()) {
+        if (hasValue(seoData.title())) {
+            sb.append("<meta property=\"og:title\" content=\"")
+                .append(HtmlEscape.escapeHtml5(seoData.title())).append("\" />\n");
+        }
+        if (hasValue(seoData.description())) {
+            sb.append("<meta property=\"og:description\" content=\"")
+                .append(HtmlEscape.escapeHtml5(seoData.description())).append("\" />\n");
+        }
+        if (hasValue(seoData.coverUrl())) {
+            sb.append("<meta property=\"og:image\" content=\"")
+                .append(HtmlEscape.escapeHtml5(seoData.coverUrl())).append("\" />\n");
+        }
+        if (hasValue(seoData.pageUrl())) {
+            sb.append("<meta property=\"og:url\" content=\"")
+                .append(HtmlEscape.escapeHtml5(seoData.pageUrl())).append("\" />\n");
+        }
+        if (hasValue(seoData.baiduPubDate())) {
             sb.append("<meta property=\"og:release_date\" content=\"")
-                .append(seoData.baiduPubDate()).append("\" />\n");
+                .append(HtmlEscape.escapeHtml5(seoData.baiduPubDate())).append("\" />\n");
         }
-        if (!seoData.baiduUpdDate().isBlank()) {
+        if (hasValue(seoData.baiduUpdDate())) {
             sb.append("<meta property=\"og:modified_time\" content=\"")
-                .append(seoData.baiduUpdDate()).append("\" />\n");
+                .append(HtmlEscape.escapeHtml5(seoData.baiduUpdDate())).append("\" />\n");
         }
-        if (!seoData.author().isBlank()) {
+        if (hasValue(seoData.author())) {
             sb.append("<meta property=\"og:author\" content=\"")
                 .append(HtmlEscape.escapeHtml5(seoData.author())).append("\" />\n");
         }
@@ -872,15 +891,14 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
      * <p>用于今日头条、抖音搜索等字节系产品的 SEO 优化。
      */
     private String genBytedanceMeta(String publishDate, String updateDate) {
-        // 字节跳动时间因子仅在日期非空时输出，列表页等无日期的页面不生成此标签
         var sb = new StringBuilder();
-        if (!publishDate.isBlank()) {
-            sb.append("<meta property=\"bytedance:published_time\" content=\"").append(publishDate)
-                .append("\" />\n");
+        if (hasValue(publishDate)) {
+            sb.append("<meta property=\"bytedance:published_time\" content=\"")
+                .append(HtmlEscape.escapeHtml5(publishDate)).append("\" />\n");
         }
-        if (!updateDate.isBlank()) {
-            sb.append("<meta property=\"bytedance:updated_time\" content=\"").append(updateDate)
-                .append("\" />\n");
+        if (hasValue(updateDate)) {
+            sb.append("<meta property=\"bytedance:updated_time\" content=\"")
+                .append(HtmlEscape.escapeHtml5(updateDate)).append("\" />\n");
         }
         return sb.toString();
     }
@@ -895,19 +913,21 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
      */
     private String genBaiduScript(String title, String url, String publishDate, String updateDate) {
         // 百度时间因子的 pubDate 和 upDate 为核心字段，全部为空时跳过整个 script 标签
-        if (publishDate.isBlank() && updateDate.isBlank()) {
+        if (!hasValue(publishDate) && !hasValue(updateDate)) {
             return "";
         }
         var sb = new StringBuilder();
         sb.append("<script type=\"application/ld+json\">\n");
         sb.append("{\n");
         sb.append("  \"@context\": \"https://ziyuan.baidu.com/contexts/cambrian.jsonld\",\n");
-        sb.append("  \"@id\": \"").append(url).append("\",\n");
+        if (hasValue(url)) {
+            sb.append("  \"@id\": \"").append(JsonEscape.escapeJson(url)).append("\",\n");
+        }
         sb.append("  \"title\": \"").append(JsonEscape.escapeJson(title)).append("\"");
-        if (!publishDate.isBlank()) {
+        if (hasValue(publishDate)) {
             sb.append(",\n  \"pubDate\": \"").append(publishDate).append("\"");
         }
-        if (!updateDate.isBlank()) {
+        if (hasValue(updateDate)) {
             sb.append(",\n  \"upDate\": \"").append(updateDate).append("\"");
         }
         sb.append("\n}\n</script>\n");
@@ -929,45 +949,67 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             case "profile" -> "ProfilePage";
             default -> "WebPage";
         };
-        // 使用 StringBuilder 动态构建 JSON-LD，日期字段为空时省略，避免无效结构化数据
+        // 使用 StringBuilder 动态构建 JSON-LD，字段为空时省略，避免无效结构化数据
         var sb = new StringBuilder();
         sb.append("<script type=\"application/ld+json\">\n");
         sb.append("{\n");
         sb.append("  \"@context\": \"https://schema.org\",\n");
-        sb.append("  \"@type\": \"").append(schemaType).append("\",\n");
-        sb.append("  \"mainEntityOfPage\": {\n");
-        sb.append("    \"@type\": \"WebPage\",\n");
-        sb.append("    \"@id\": \"").append(seoData.postUrl()).append("\"\n");
-        sb.append("  },\n");
-        sb.append("  \"headline\": \"").append(JsonEscape.escapeJson(seoData.title()))
-            .append("\",\n");
-        sb.append("  \"description\": \"").append(JsonEscape.escapeJson(seoData.description()))
-            .append("\"");
-        if (!seoData.googlePubDate().isBlank()) {
+        sb.append("  \"@type\": \"").append(schemaType).append("\"");
+        if (hasValue(seoData.pageUrl())) {
+            sb.append(",\n  \"mainEntityOfPage\": {\n");
+            sb.append("    \"@type\": \"WebPage\",\n");
+            sb.append("    \"@id\": \"").append(JsonEscape.escapeJson(seoData.pageUrl()))
+                .append("\"\n");
+            sb.append("  }");
+        }
+        if (hasValue(seoData.title())) {
+            sb.append(",\n  \"headline\": \"").append(JsonEscape.escapeJson(seoData.title()))
+                .append("\"");
+        }
+        if (hasValue(seoData.description())) {
+            sb.append(",\n  \"description\": \"")
+                .append(JsonEscape.escapeJson(seoData.description())).append("\"");
+        }
+        if (hasValue(seoData.googlePubDate())) {
             sb.append(",\n  \"datePublished\": \"").append(seoData.googlePubDate()).append("\"");
         }
-        if (!seoData.googleUpdDate().isBlank()) {
+        if (hasValue(seoData.googleUpdDate())) {
             sb.append(",\n  \"dateModified\": \"").append(seoData.googleUpdDate()).append("\"");
         }
-        sb.append(",\n  \"author\": {\n");
-        sb.append("    \"@type\": \"Person\",\n");
-        sb.append("    \"name\": \"").append(JsonEscape.escapeJson(seoData.author()))
-            .append("\"\n");
-        sb.append("  },\n");
-        sb.append("  \"publisher\": {\n");
-        sb.append("    \"@type\": \"Organization\",\n");
-        sb.append("    \"name\": \"").append(JsonEscape.escapeJson(seoData.siteName()))
-            .append("\",\n");
-        sb.append("    \"logo\": {\n");
-        sb.append("      \"@type\": \"ImageObject\",\n");
-        sb.append("      \"url\": \"").append(seoData.siteLogo()).append("\"\n");
-        sb.append("    }\n");
-        sb.append("  },\n");
-        sb.append("  \"image\": \"").append(seoData.coverUrl()).append("\",\n");
-        sb.append("  \"url\": \"").append(seoData.postUrl()).append("\",\n");
-        sb.append("  \"keywords\": \"").append(JsonEscape.escapeJson(seoData.keywords()))
-            .append("\"\n");
-        sb.append("}\n</script>\n");
+        if (hasValue(seoData.author())) {
+            sb.append(",\n  \"author\": {\n");
+            sb.append("    \"@type\": \"Person\",\n");
+            sb.append("    \"name\": \"").append(JsonEscape.escapeJson(seoData.author()))
+                .append("\"\n");
+            sb.append("  }");
+        }
+        if (hasValue(seoData.siteName())) {
+            sb.append(",\n  \"publisher\": {\n");
+            sb.append("    \"@type\": \"Organization\",\n");
+            sb.append("    \"name\": \"").append(JsonEscape.escapeJson(seoData.siteName()))
+                .append("\"");
+            if (hasValue(seoData.siteLogo())) {
+                sb.append(",\n    \"logo\": {\n");
+                sb.append("      \"@type\": \"ImageObject\",\n");
+                sb.append("      \"url\": \"").append(JsonEscape.escapeJson(seoData.siteLogo()))
+                    .append("\"\n");
+                sb.append("    }");
+            }
+            sb.append("\n  }");
+        }
+        if (hasValue(seoData.coverUrl())) {
+            sb.append(",\n  \"image\": \"").append(JsonEscape.escapeJson(seoData.coverUrl()))
+                .append("\"");
+        }
+        if (hasValue(seoData.pageUrl())) {
+            sb.append(",\n  \"url\": \"").append(JsonEscape.escapeJson(seoData.pageUrl()))
+                .append("\"");
+        }
+        if (hasValue(seoData.keywords())) {
+            sb.append(",\n  \"keywords\": \"").append(JsonEscape.escapeJson(seoData.keywords()))
+                .append("\"");
+        }
+        sb.append("\n}\n</script>\n");
         return sb.toString();
     }
 
@@ -991,34 +1033,34 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
         sb.append("<meta name=\"twitter:card\" content=\"")
             .append(HtmlEscape.escapeHtml5(twitterCardsType)).append("\" />\n");
 
-        // 站点 Twitter 用户名（可选）
-        if (twitterSiteUsername != null && !twitterSiteUsername.trim().isEmpty()) {
+        if (hasValue(twitterSiteUsername)) {
             sb.append("<meta name=\"twitter:site\" content=\"")
                 .append(HtmlEscape.escapeHtml5(twitterSiteUsername)).append("\" />\n");
         }
-        // 站点 Twitter 用户 ID（可选）
-        if (twitterSiteUserId != null && !twitterSiteUserId.trim().isEmpty()) {
+        if (hasValue(twitterSiteUserId)) {
             sb.append("<meta name=\"twitter:site:id\" content=\"")
                 .append(HtmlEscape.escapeHtml5(twitterSiteUserId)).append("\" />\n");
         }
-        // 创作者 Twitter 用户名（可选）
-        if (twitterCreatorUsername != null && !twitterCreatorUsername.trim().isEmpty()) {
+        if (hasValue(twitterCreatorUsername)) {
             sb.append("<meta name=\"twitter:creator\" content=\"")
                 .append(HtmlEscape.escapeHtml5(twitterCreatorUsername)).append("\" />\n");
         }
-        // 创作者 Twitter 用户 ID（可选）
-        if (twitterCreatorUserId != null && !twitterCreatorUserId.trim().isEmpty()) {
+        if (hasValue(twitterCreatorUserId)) {
             sb.append("<meta name=\"twitter:creator:id\" content=\"")
                 .append(HtmlEscape.escapeHtml5(twitterCreatorUserId)).append("\" />\n");
         }
-
-        // 标题、描述、图片标签始终添加
-        sb.append("<meta name=\"twitter:title\" content=\"")
-            .append(HtmlEscape.escapeHtml5(seoData.title())).append("\" />\n");
-        sb.append("<meta name=\"twitter:description\" content=\"")
-            .append(HtmlEscape.escapeHtml5(seoData.description())).append("\" />\n");
-        sb.append("<meta name=\"twitter:image\" content=\"")
-            .append(HtmlEscape.escapeHtml5(seoData.coverUrl())).append("\" />\n");
+        if (hasValue(seoData.title())) {
+            sb.append("<meta name=\"twitter:title\" content=\"")
+                .append(HtmlEscape.escapeHtml5(seoData.title())).append("\" />\n");
+        }
+        if (hasValue(seoData.description())) {
+            sb.append("<meta name=\"twitter:description\" content=\"")
+                .append(HtmlEscape.escapeHtml5(seoData.description())).append("\" />\n");
+        }
+        if (hasValue(seoData.coverUrl())) {
+            sb.append("<meta name=\"twitter:image\" content=\"")
+                .append(HtmlEscape.escapeHtml5(seoData.coverUrl())).append("\" />\n");
+        }
 
         return sb.toString();
     }
@@ -1064,10 +1106,18 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     }
 
     /**
-     * 空安全字符串转换，将 null 转为空字符串。
+     * 判断字符串是否有实际内容（非 null 且非空白）。
+     * 用于输出阶段决定是否生成对应的 SEO 标签：无值则跳过，避免输出空标签。
      */
-    private String safeString(String value) {
-        return value == null ? "" : value;
+    private boolean hasValue(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    /**
+     * 将相对路径或路径片段转为完整外部 URL，null 或空白时返回 null（表示无值）。
+     */
+    private String processPermalink(String path) {
+        return hasValue(path) ? externalLinkProcessor.processLink(path) : null;
     }
 
     /**
@@ -1096,7 +1146,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
      * @param title 页面标题
      * @param description 页面描述/摘要
      * @param coverUrl 封面图 URL（已处理为完整外部链接）
-     * @param postUrl 页面 URL（已处理为完整外部链接）
+     * @param pageUrl 页面 URL（已处理为完整外部链接）
      * @param author 作者名称
      * @param baiduPubDate 百度格式发布时间
      * @param baiduUpdDate 百度格式更新时间
@@ -1108,7 +1158,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
      * @param pageType 页面语义类型，用于推导 og:type 和 Schema.org @type。
      * 取值：website（列表/聚合页）、article（内容详情页）、profile（作者页）
      */
-    private record SeoData(String title, String description, String coverUrl, String postUrl,
+    private record SeoData(String title, String description, String coverUrl, String pageUrl,
                            String author, String baiduPubDate, String baiduUpdDate,
                            String googlePubDate, String googleUpdDate, String siteName,
                            String siteLogo, String keywords, String pageType) {
