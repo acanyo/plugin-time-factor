@@ -139,6 +139,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     private static final String PAGE_DESC_DOUBAN = "豆瓣内容页面";
     private static final String PAGE_LABEL_BANGUMI = "番剧";
     private static final String PAGE_DESC_BANGUMI = "番剧数据页面";
+    private static final String TAG_DESC_PREFIX = "标签: ";
     private static final String CATEGORY_DESC_PREFIX = "分类: ";
     private static final String AUTHOR_DESC_PREFIX = "作者: ";
 
@@ -734,9 +735,9 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             var displayName = tag.getSpec().getDisplayName();
             var siteName = systemInfo.getTitle();
             var title = hasValue(siteName) ? displayName + " - " + siteName : displayName;
-            // 描述：优先 Tag 自身的 description，回退到 "标签: displayName"（等待 API 升级 2.23.1）
-            // var description =
-            //     firstNonBlank(tag.getSpec().getDescription, "标签: " + displayName);
+            // 描述：优先 Tag 自身的 description，回退到 "标签: displayName"
+            var description =
+                firstNonBlank(tag.getSpec().getDescription(), TAG_DESC_PREFIX + displayName);
 
             // status 字段在 Reconciler 首次处理前为 null，使用 getStatusOrDefault() 安全获取
             var pageUrl = processPermalink(tag.getStatusOrDefault().getPermalink());
@@ -747,8 +748,8 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
 
             // 标签没有独立的作者和发布时间；作者优先使用默认作者，回退到站点名称；pageType 为 website
             var author = firstNonBlank(config.getDefaultAuthor(), siteName);
-            return new SeoData(title, null, coverUrl, pageUrl, author, null, null, null, null,
-                siteName, siteLogo, displayName, "website");
+            return new SeoData(title, description, coverUrl, pageUrl, author, null, null, null,
+                null, siteName, siteLogo, displayName, "website");
         });
     }
 
