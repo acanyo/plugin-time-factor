@@ -145,7 +145,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
             Optional.ofNullable(context.getVariable(ModelConst.TEMPLATE_ID)).map(Object::toString)
                 .orElse(null);
         var template = TemplateEnum.fromTemplateId(templateId);
-        log.info("Processing SEO for templateId: {}", templateId);
+        log.debug("Processing SEO for templateId: {}", templateId);
 
         // 按模板类型分发，全局捕获异常避免影响页面渲染
         Mono<Void> result = switch (template) {
@@ -387,17 +387,11 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     private Mono<Void> processTagSeoData(ITemplateContext context, IModel model) {
         var modelFactory = context.getModelFactory();
         var tagName = getNameVariable(context);
-        log.info("processTagSeoData called, tagName={}", tagName);
         if (tagName == null) {
             return Mono.empty();
         }
-        return client.fetch(Tag.class, tagName)
-            .doOnNext(tag -> log.info("Tag fetched: {}", tag.getSpec().getDisplayName()))
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("Tag not found via client.fetch: {}", tagName);
-                return Mono.empty();
-            })).flatMap(tag -> buildSeoDataForTag(tag).flatMap(
-                seoData -> generateSeoTags(seoData, model, modelFactory)));
+        return client.fetch(Tag.class, tagName).flatMap(tag -> buildSeoDataForTag(tag).flatMap(
+            seoData -> generateSeoTags(seoData, model, modelFactory)));
     }
 
     /**
