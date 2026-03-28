@@ -14,7 +14,13 @@ public class SettingConfigGetterImpl implements SettingConfigGetter {
 
     @Override
     public Mono<BasicConfig> getBasicConfig() {
-       return settingFetcher.fetch(BasicConfig.GROUP, BasicConfig.class)
-           .defaultIfEmpty(new BasicConfig());
+        return settingFetcher.fetch(BasicConfig.GROUP, BasicConfig.class)
+            .defaultIfEmpty(new BasicConfig());
+    }
+
+    @Override
+    public Mono<SeoOverrideConfig> getSeoOverrideConfig() {
+        return settingFetcher.fetch(SeoOverrideConfig.GROUP, SeoOverrideConfig.class)
+            .defaultIfEmpty(new SeoOverrideConfig());
     }
 }

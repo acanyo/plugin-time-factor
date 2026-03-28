@@ -155,3 +155,66 @@ spec:
           id: defaultImage
           key: defaultImage
           help: "当没有设置封面图时使用"
+        - $formkit: text
+          label: 默认作者
+          name: defaultAuthor
+          id: defaultAuthor
+          key: defaultAuthor
+          value: ""
+          help: "列表页、分类页、标签页等无具体作者的页面使用；留空时回退到站点名称"
+    - group: seoOverrides
+      label: SEO 覆盖
+      formSchema:
+        - $formkit: array
+          label: 模板 SEO 覆盖
+          name: seoOverrides
+          id: seoOverrides
+          key: seoOverrides
+          help: "按模板 ID 手动指定标题/描述，优先级高于页面 <title> 标签和 <meta name=\"description\">"
+          value:
+            - templateId: categories
+              title: 分类集合 - %SITENAME%
+              description: 分类集合 - %SITEDESC%
+            - templateId: tags
+              title: 标签集合 - %SITENAME%
+              description: 标签集合 - %SITEDESC%
+            - templateId: archives
+              title: 文章归档 - %SITENAME%
+              description: 文章归档 - %SITEDESC%
+            - templateId: moments
+              title: 瞬间 - %SITENAME%
+              description: 瞬间 - %SITEDESC%
+            - templateId: moment
+              title: 瞬间 - %SITENAME%
+              description: 瞬间 - %SITEDESC%
+            - templateId: photos
+              title: 图库 - %SITENAME%
+              description: 图库 - %SITEDESC%
+            - templateId: friends
+              title: 朋友圈 - %SITENAME%
+              description: 朋友圈 - %SITEDESC%
+            - templateId: douban
+              title: "%TITLE%"
+              description: "%TITLE% - %SITEDESC%"
+            - templateId: bangumi
+              title: 番剧 - %SITENAME%
+              description: 番剧 - %SITEDESC%
+          children:
+            - $formkit: text
+              label: 模板 ID
+              name: templateId
+              id: templateId
+              key: templateId
+              help: "例如：post、page、index、category、moments 等"
+            - $formkit: text
+              label: 标题
+              name: title
+              id: title
+              key: title
+              help: "留空则不覆盖；支持占位符：%TITLE%（页面标题）、%DESC%（页面描述）、%SITENAME%（站点标题）、%SITEDESC%（站点描述）"
+            - $formkit: text
+              label: 描述
+              name: description
+              id: description
+              key: description
+              help: "留空则不覆盖；支持占位符：%TITLE%（页面标题）、%DESC%（页面描述）、%SITENAME%（站点标题）、%SITEDESC%（站点描述）"

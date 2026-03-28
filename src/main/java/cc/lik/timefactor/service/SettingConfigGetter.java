@@ -8,10 +8,25 @@ import java.util.List;
 public interface SettingConfigGetter {
     Mono<BasicConfig> getBasicConfig();
 
+    Mono<SeoOverrideConfig> getSeoOverrideConfig();
+
     @Data
     class alternateLink {
         private String langCode;
         private String urlTemplate;
+    }
+
+    @Data
+    class SeoOverrideEntry {
+        private String templateId;
+        private String title;
+        private String description;
+    }
+
+    @Data
+    class SeoOverrideConfig {
+        public static final String GROUP = "seoOverrides";
+        private List<SeoOverrideEntry> seoOverrides;
     }
 
     @Data
@@ -31,5 +46,6 @@ public interface SettingConfigGetter {
         private String twitterCreatorUsername;
         private String twitterCreatorUserId;
         private String defaultImage;
+        private String defaultAuthor;
     }
 }
