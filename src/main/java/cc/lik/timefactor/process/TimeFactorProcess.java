@@ -408,8 +408,7 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     private Mono<Void> processCategorySeoData(ITemplateContext context, IModel model,
         SeoOverride override) {
         var modelFactory = context.getModelFactory();
-        // 分类详情页不注入 name 变量，从上下文的 CategoryVo 对象取 metadata.name
-        var categoryName = getMetadataNameFromVo(context, "category");
+        var categoryName = getNameVariable(context);
         if (categoryName == null) {
             return Mono.empty();
         }
@@ -1235,27 +1234,6 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
     private String getNameVariable(ITemplateContext context) {
         return Optional.ofNullable(context.getVariable("name")).map(Object::toString)
             .filter(s -> !s.isBlank()).orElse(null);
-    }
-
-    /**
-     * 从上下文的 Vo 对象中获取 metadata.name。
-     *
-     * <p>Category 详情页不在上下文中注入独立的 {@code name} 变量，
-     * 需要通过 Vo 对象的 {@link ExtensionVoOperator#getMetadata()} 提取。
-     * 注意：第三方插件的 Vo（如 MomentVo）在上下文中可能是延迟加载的 Mono 对象，
-     * 此方法无法处理这种情况，会返回 null。
-     *
-     * @param context Thymeleaf 模板上下文
-     * @param voVariableName 上下文中 Vo 对象的变量名，如 "category"
-     * @return metadata.name，获取失败时返回 null
-     */
-    private String getMetadataNameFromVo(ITemplateContext context, String voVariableName) {
-        var vo = context.getVariable(voVariableName);
-        if (vo instanceof ExtensionVoOperator evo) {
-            return Optional.ofNullable(evo.getMetadata()).map(MetadataOperator::getName)
-                .filter(s -> !s.isBlank()).orElse(null);
-        }
-        return null;
     }
 
     /**
