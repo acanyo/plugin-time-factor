@@ -182,11 +182,11 @@ spec:
               title: 文章归档 - %SITENAME%
               description: 文章归档 - %SITEDESC%
             - templateId: moments
-              title: 瞬间 - %SITENAME%
-              description: 瞬间 - %SITEDESC%
+              title: "%TITLE% - %SITENAME%"
+              description: "%TITLE% - %SITEDESC%"
             - templateId: moment
-              title: 瞬间 - %SITENAME%
-              description: 瞬间 - %SITEDESC%
+              title: "%TITLE% - %SITENAME%"
+              description: "%TITLE% - %SITEDESC%"
             - templateId: photos
               title: 图库 - %SITENAME%
               description: 图库 - %SITEDESC%
@@ -194,7 +194,7 @@ spec:
               title: 朋友圈 - %SITENAME%
               description: 朋友圈 - %SITEDESC%
             - templateId: douban
-              title: "%TITLE%"
+              title: "%TITLE% - %SITENAME%"
               description: "%TITLE% - %SITEDESC%"
             - templateId: bangumi
               title: 番剧 - %SITENAME%
