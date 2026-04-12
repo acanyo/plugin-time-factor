@@ -194,7 +194,7 @@ spec:
               title: 朋友圈 - %SITENAME%
               description: 朋友圈 - %SITEDESC%
             - templateId: douban
-              title: "%TITLE%"
+              title: "%TITLE% - %SITENAME%"
               description: "%TITLE% - %SITEDESC%"
             - templateId: bangumi
               title: 番剧 - %SITENAME%
