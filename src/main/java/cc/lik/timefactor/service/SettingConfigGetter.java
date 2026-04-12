@@ -1,9 +1,8 @@
 package cc.lik.timefactor.service;
 
+import java.util.List;
 import lombok.Data;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Operators;
-import java.util.List;
 
 public interface SettingConfigGetter {
     Mono<BasicConfig> getBasicConfig();
