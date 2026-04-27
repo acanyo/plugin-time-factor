@@ -276,7 +276,12 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
      */
     private Mono<Void> processMomentsSeoData(ITemplateContext context, IModel model,
         SeoOverride override) {
-        return buildListPageSeoData(context, model, rules -> "/moments", override);
+        // 瞬间路由在上下文中注入了 title 变量，作为 <title> 提取失败时的中间回退
+        var contextTitle = Optional.ofNullable(context.getVariable("title")).map(Object::toString)
+            .filter(s -> !s.isBlank()).orElse(null);
+        // MomentVo 在上下文中是延迟加载的 Mono 对象，无法直接获取 metadata.name，降级使用站点信息
+        return buildListPageSeoData(context, model, rules -> "/moments", override, contextTitle,
+            null);
     }
 
     /**
@@ -288,8 +293,12 @@ public class TimeFactorProcess implements TemplateHeadProcessor {
      */
     private Mono<Void> processMomentSeoData(ITemplateContext context, IModel model,
         SeoOverride override) {
+        // 瞬间路由在上下文中注入了 title 变量，作为 <title> 提取失败时的中间回退
+        var contextTitle = Optional.ofNullable(context.getVariable("title")).map(Object::toString)
+            .filter(s -> !s.isBlank()).orElse(null);
         // MomentVo 在上下文中是延迟加载的 Mono 对象，无法直接获取 metadata.name，降级使用站点信息
-        return buildListPageSeoData(context, model, rules -> "/moments", override);
+        return buildListPageSeoData(context, model, rules -> "/moments", override, contextTitle,
+            null);
     }
 
     /**
